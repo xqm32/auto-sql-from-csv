@@ -7,24 +7,24 @@ DROP TABLE IF EXISTS {table_name};
 CREATE TABLE {table_name} ({table_schema});
 """
 
-column_name = "列名"
-data_type = "数据类型"
+csv_column_name = "列名"
+csv_data_type = "数据类型"
 
-is_key = "主键或外键"
-primary = "主键"
-foreign = "外键"
+csv_is_key = "主键或外键"
+csv_value_primary = "主键"
+csv_value_foreign = "外键"
 
-constraint = "字段值约束"
-not_null = "不为空"
-unique = "唯一"
+csv_constraint = "字段值约束"
+csv_value_not_null = "不为空"
+csv_value_unique = "唯一"
 
-name = "对应中文属性名"
+csv_chinese_name = "对应中文属性名"
 
 primary_key = ""
 
-def convert(row_type):
-    row_type = re.findall(r"[a-zA-Z]+", row_type)[0].upper()
-    match (row_type):
+def convert(data_type):
+    data_type = re.findall(r"[a-zA-Z]+", data_type)[0].upper()
+    match (data_type):
         case "TEXT" | "CHAR" | "NVARCHAR" | "DATETIME":
             return "TEXT"
         case "NUMERIC":
@@ -32,22 +32,22 @@ def convert(row_type):
         case "FLOAT":
             return "REAL"
         case _:
-            return row_type
+            return data_type
 
 
-def resolve(row):
+def resolve_row(row):
     global primary_key
-    row_type = " " + convert(row[data_type])
-    be_null = " NOT NULL" if type(row[constraint]) is str and not_null in row[constraint] else ""
-    be_unique = " UNIQUE" if type(row[constraint]) is str and unique in row[constraint] else ""
-    if row[is_key] == primary:
+    data_type = " " + convert(row[csv_data_type])
+    not_null = " NOT NULL" if type(row[csv_constraint]) is str and csv_value_not_null in row[csv_constraint] else ""
+    unique = " UNIQUE" if type(row[csv_constraint]) is str and csv_value_unique in row[csv_constraint] else ""
+    if row[csv_is_key] == csv_value_primary:
         autoincrement = ""
-        if "ID" in row[column_name].upper():
-            row_type = " INTEGER"
+        if "ID" in row[csv_column_name].upper():
+            data_type = " INTEGER"
             autoincrement = " AUTOINCREMENT"
 
-        primary_key = f", PRIMARY KEY ({row[name]}{autoincrement})"
-    return f"{row[name]}{row_type}{be_unique}{be_null}"
+        primary_key = f", PRIMARY KEY ({row[csv_chinese_name]}{autoincrement})"
+    return f"{row[csv_chinese_name]}{data_type}{unique}{not_null}"
 
 def resolve_csv(csv_file):
     print("Resolving csv file: " + csv_file)
@@ -55,7 +55,7 @@ def resolve_csv(csv_file):
     primary_key = ""
     table_name = csv_file.rstrip(".csv")
     schema = pandas.read_csv(csv_file, encoding="utf-8")
-    table_schema = ", ".join(resolve(i[1]) for i in schema.iterrows()) + primary_key
+    table_schema = ", ".join(resolve_row(i[1]) for i in schema.iterrows()) + primary_key
     return table_template.format(table_name=table_name, table_schema=table_schema)
 
 files = filter(lambda i: i.endswith(".csv"), os.listdir())
