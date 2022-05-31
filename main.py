@@ -21,8 +21,6 @@ csv_value_unique = "唯一"
 csv_chinese_name = "对应中文属性名"
 csv_default = "默认值"
 
-primary_key = ""
-
 
 def convert(data_type):
     data_type = re.findall(r"[a-zA-Z]+", data_type)[0].upper()
@@ -38,29 +36,29 @@ def convert(data_type):
 
 
 def resolve_row(row):
-    global primary_key
-
     data_type = " " + convert(row[csv_data_type])
     not_null = " NOT NULL" if csv_value_not_null in row[csv_constraint] else ""
     unique = " UNIQUE" if csv_value_unique in row[csv_constraint] else ""
     default_value = " DEFAULT " + row[csv_default] if row[csv_default] else ""
+    reference = ""
+    primary_key = ""
+    autoincrement = ""
 
     if row[csv_is_key] == csv_value_primary:
-        autoincrement = ""
         if "ID" in row[csv_column_name].upper():
             data_type = " INTEGER"
             autoincrement = " AUTOINCREMENT"
 
-        primary_key = f", PRIMARY KEY ({row[csv_chinese_name]}{autoincrement})"
+        primary_key = f" PRIMARY KEY"
+    elif csv_value_foreign in row[csv_is_key]:
+        refer_to = row[csv_is_key].split(":")[1]
+        reference = f" REFERENCES {refer_to}({row[csv_chinese_name]})"
 
-    return f"{row[csv_chinese_name]}{data_type}{unique}{not_null}{default_value}"
+    return f"{row[csv_chinese_name]}{data_type}{unique}{not_null}{reference}{primary_key}{autoincrement}{default_value}"
 
 
 def resolve_csv(csv_file):
     print("Resolving csv file: " + csv_file)
-
-    global primary_key
-    primary_key = ""
 
     table_name = csv_file.rstrip(".csv")
 
@@ -69,7 +67,7 @@ def resolve_csv(csv_file):
     if csv_default not in schema.columns:
         schema[csv_default] = ""
 
-    table_schema = ", ".join(resolve_row(i[1]) for i in schema.iterrows()) + primary_key
+    table_schema = ", ".join(resolve_row(i[1]) for i in schema.iterrows())
     return table_template.format(table_name=table_name, table_schema=table_schema)
 
 
