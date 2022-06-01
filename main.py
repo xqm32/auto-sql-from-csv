@@ -44,13 +44,16 @@ def resolve_row(row):
     primary_key = ""
     autoincrement = ""
 
+    if "编号" in row[csv_chinese_name]:
+        data_type = " INTEGER"
+
     if csv_value_primary in row[csv_is_key]:
         # 是主键且编号
         if "编号" in row[csv_chinese_name] and csv_value_foreign not in row[csv_is_key]:
             data_type = " INTEGER"
             autoincrement = " AUTOINCREMENT"
-
         primary_key = f" PRIMARY KEY"
+
     if csv_value_foreign in row[csv_is_key]:
         refer_to = row[csv_is_key].split(":")[1]
         reference = f" REFERENCES {refer_to}({row[csv_chinese_name]})"
