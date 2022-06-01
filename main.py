@@ -46,7 +46,7 @@ def resolve_row(row):
 
     if csv_value_primary in row[csv_is_key]:
         # 是主键且编号
-        if "编号" in row[csv_chinese_name]:
+        if "编号" in row[csv_chinese_name] and csv_value_foreign not in row[csv_is_key]:
             data_type = " INTEGER"
             autoincrement = " AUTOINCREMENT"
 
