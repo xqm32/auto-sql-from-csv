@@ -44,13 +44,14 @@ def resolve_row(row):
     primary_key = ""
     autoincrement = ""
 
-    if row[csv_is_key] == csv_value_primary:
-        if "ID" in row[csv_column_name].upper():
+    if csv_value_primary in row[csv_is_key]:
+        # 是主键且编号
+        if "编号" in row[csv_chinese_name]:
             data_type = " INTEGER"
             autoincrement = " AUTOINCREMENT"
 
         primary_key = f" PRIMARY KEY"
-    elif csv_value_foreign in row[csv_is_key]:
+    if csv_value_foreign in row[csv_is_key]:
         refer_to = row[csv_is_key].split(":")[1]
         reference = f" REFERENCES {refer_to}({row[csv_chinese_name]})"
 
@@ -68,6 +69,8 @@ def resolve_csv(csv_file):
         schema[csv_default] = ""
 
     table_schema = ", ".join(resolve_row(i[1]) for i in schema.iterrows())
+    if "PRIMARY KEY" not in table_schema:
+        print("Warning: No primary key found in table: " + table_name)
     return table_template.format(table_name=table_name, table_schema=table_schema)
 
 
